@@ -8,14 +8,14 @@ app.use(express.json());
 
 app.post('/functional', (req, res) => {
   const result = evaluate(rules, req.body);
-  res.json({ mode: 'functional-lite', decision: result });
+  res.json({ mode: 'functional-lite', result });
 });
 
 app.post('/oop', (req, res) => {
   const evaluator = new GDPREvaluator();
   evaluator.reset(req.body);
   const result = evaluator.run();
-  res.json({ mode: 'oop-stateful', decision: result });
+  res.json({ mode: 'oop-stateful', result });
 });
 
 const PORT = 8000;

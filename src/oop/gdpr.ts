@@ -4,6 +4,7 @@ export class GDPREvaluator {
   private currentNode: any;
   private isResolved: boolean = false;
   private payload: Payload | null = null;
+  private path: string[] = []; // ADDED STATE for Audit Trail
 
   constructor() {
     this.currentNode = rules;
@@ -13,12 +14,15 @@ export class GDPREvaluator {
     this.currentNode = rules;
     this.isResolved = false;
     this.payload = payload;
+    this.path = []; // MUST remember to clear state
   }
 
   private step(): void {
     if (this.isResolved) return;
 
     const node = this.currentNode;
+    this.path.push(node.condition_id); // Mutating state
+
     if (node.outcome) {
       this.isResolved = true;
       return;
@@ -47,6 +51,9 @@ export class GDPREvaluator {
     while (!this.isResolved) {
       this.step();
     }
-    return this.currentNode.outcome;
+    return {
+      outcome: this.currentNode.outcome,
+      path: this.path,
+    };
   }
 }

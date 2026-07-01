@@ -3,7 +3,7 @@ import { evaluate } from '../src/functional/gdpr';
 import { GDPREvaluator } from '../src/oop/gdpr';
 import { rules } from '../src/shared';
 
-describe('GDPR Predictability Gauntlet', () => {
+describe('GDPR Audit Trail Gauntlet', () => {
   const testPayloads = [
     {
       has_personal_data: true,
@@ -30,14 +30,15 @@ describe('GDPR Predictability Gauntlet', () => {
   ];
 
   testPayloads.forEach((payload, idx) => {
-    it(`Scenario ${idx}: Functional and OOP results must be identical`, () => {
+    it(`Scenario ${idx}: Functional and OOP audit trails must be identical`, () => {
       const functionalResult = evaluate(rules, payload);
       
       const evaluator = new GDPREvaluator();
       evaluator.reset(payload);
       const oopResult = evaluator.run();
 
-      expect(functionalResult).toEqual(oopResult);
+      expect(functionalResult.outcome).toEqual(oopResult.outcome);
+      expect(functionalResult.path).toEqual(oopResult.path);
     });
   });
 });

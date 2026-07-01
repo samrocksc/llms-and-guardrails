@@ -6,9 +6,19 @@ export type Outcome = {
   remediation_priority: string;
 };
 
-export function evaluate(node: any, payload: Payload): Outcome {
+export type EvaluationResult = {
+  outcome: Outcome;
+  path: string[];
+};
+
+export function evaluate(node: any, payload: Payload, path: string[] = []): EvaluationResult {
+  const currentPath = [...path, node.condition_id];
+  
   if (node.outcome) {
-    return node.outcome;
+    return {
+      outcome: node.outcome,
+      path: currentPath,
+    };
   }
 
   const val = resolveField(node.field_to_evaluate, payload);
@@ -26,5 +36,5 @@ export function evaluate(node: any, payload: Payload): Outcome {
     return false;
   })();
 
-  return evaluate(isTrue ? node.true_branch : node.false_branch, payload);
+  return evaluate(isTrue ? node.true_branch : node.false_branch, payload, currentPath);
 }
