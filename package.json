@@ -1,0 +1,37 @@
+{
+  "name": "llms-and-guardrails",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samrocksc/llms-and-guardrails.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/samrocksc/llms-and-guardrails/issues"
+  },
+  "homepage": "https://github.com/samrocksc/llms-and-guardrails#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.0.1",
+    "eslint": "^10.6.0",
+    "eslint-plugin-complexity": "^1.0.2",
+    "eslint-plugin-functional": "^10.0.0",
+    "globals": "^17.7.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.9"
+  }
+}

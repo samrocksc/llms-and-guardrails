@@ -1,0 +1,235 @@
+{
+  "rules_tree_root": {
+    "root_rule": {
+      "condition_id": "COND_001_IS_PERSONAL_DATA",
+      "description": "Does the incident involve identifiable or identified natural personal data?",
+      "evaluation_type": "boolean_match",
+      "field_to_evaluate": "payload.has_personal_data",
+      "false_branch": {
+        "condition_id": "COND_001_F_NON_PERSONAL_LOG",
+        "evaluation_type": "boolean_match",
+        "field_to_evaluate": "payload.is_proprietary_intellectual_property",
+        "true_branch": {
+          "condition_id": "OUTCOME_SEC_INCIDENT",
+          "evaluation_type": "boolean_match",
+          "field_to_evaluate": "always_true",
+          "outcome": {
+            "action": "LOG_AND_DROP_NO_ACTION",
+            "risk_score_multiplier": 0.0,
+            "remediation_priority": "LOW_INTERNAL_SECURITY_TICKET"
+          }
+        },
+        "false_branch": {
+          "condition_id": "OUTCOME_NO_ACTION",
+          "evaluation_type": "boolean_match",
+          "field_to_evaluate": "always_true",
+          "outcome": {
+            "action": "LOG_AND_DROP_NO_ACTION",
+            "risk_score_multiplier": 0.0,
+            "remediation_priority": "NONE"
+          }
+        }
+      },
+      "true_branch": {
+        "condition_id": "COND_002_ORGANIZATIONAL_ROLE",
+        "description": "Is the evaluating organization acting as Data Controller or Data Processor?",
+        "evaluation_type": "matrix_lookup",
+        "field_to_evaluate": "context.organization_role",
+        "false_branch": {
+          "condition_id": "OUTCOME_PROCESSOR_OBLIGATION",
+          "description": "Processors must notify controllers without undue delay.",
+          "evaluation_type": "boolean_match",
+          "field_to_evaluate": "context.has_notified_controller_contractually",
+          "true_branch": {
+            "condition_id": "COND_PROC_SUB_RISK",
+            "evaluation_type": "boolean_match",
+            "field_to_evaluate": "payload.processor_co_responsibility",
+            "true_branch": {
+              "condition_id": "OUTCOME_PROC_DPA",
+              "evaluation_type": "boolean_match",
+              "field_to_evaluate": "always_true",
+              "outcome": {
+                "action": "NOTIFY_CONTROLLER_IMMEDIATELY",
+                "risk_score_multiplier": 1.5,
+                "remediation_priority": "CRITICAL_COMPLIANCE_ALARM"
+              }
+            },
+            "false_branch": {
+              "condition_id": "OUTCOME_PROC_DONE",
+              "evaluation_type": "boolean_match",
+              "field_to_evaluate": "always_true",
+              "outcome": {
+                "action": "NOTIFY_CONTROLLER_IMMEDIATELY",
+                "risk_score_multiplier": 1.0,
+                "remediation_priority": "HIGH"
+              }
+            }
+          },
+          "false_branch": {
+            "condition_id": "OUTCOME_PROC_VIOLATION",
+            "evaluation_type": "boolean_match",
+            "field_to_evaluate": "always_true",
+            "outcome": {
+              "action": "NOTIFY_CONTROLLER_IMMEDIATELY",
+              "risk_score_multiplier": 3.0,
+              "remediation_priority": "IMMEDIATE_LEGAL_INTERVENTION"
+            }
+          }
+        },
+        "true_branch": {
+          "condition_id": "COND_003_DATA_CLASSIFICATION",
+          "description": "Evaluate if the payload contains special categories of data under Article 9.",
+          "evaluation_type": "any_of",
+          "field_to_evaluate": "payload.data_categories_exposed",
+          "true_branch": {
+            "condition_id": "COND_004_A_ENCRYPTION_STATUS_HIGH",
+            "description": "Was the special category data protected by advanced encryption?",
+            "evaluation_type": "boolean_match",
+            "field_to_evaluate": "payload.security_measures.is_encrypted",
+            "true_branch": {
+              "condition_id": "COND_005_A_KEY_COMPROMISE",
+              "description": "Was the encryption key or corresponding credential also accessed/compromised?",
+              "evaluation_type": "boolean_match",
+              "field_to_evaluate": "payload.security_measures.key_compromised",
+              "true_branch": {
+                "condition_id": "OUTCOME_HIGH_RISK_BREACH_SPECIAL",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "always_true",
+                "outcome": {
+                  "action": "NOTIFY_DPA_AND_SUBJECTS_IMMEDIATELY",
+                  "risk_score_multiplier": 5.0,
+                  "remediation_priority": "TIER_1_P1_WAR_ROOM"
+                }
+              },
+              "false_branch": {
+                "condition_id": "COND_006_A_ALGORITHM_STRENGTH",
+                "description": "Is the encryption algorithm state-of-the-art or considered broken?",
+                "evaluation_type": "threshold_check",
+                "field_to_evaluate": "payload.security_measures.algorithm_bits",
+                "true_branch": {
+                  "condition_id": "OUTCOME_MITIGATED_INTERNAL_LOG",
+                  "evaluation_type": "boolean_match",
+                  "field_to_evaluate": "always_true",
+                  "outcome": {
+                    "action": "INTERNAL_RECORD_ONLY",
+                    "risk_score_multiplier": 0.2,
+                    "remediation_priority": "MEDIUM_RE_ENCRYPT_JOB"
+                  }
+                },
+                "false_branch": {
+                  "condition_id": "OUTCOME_DEPRECATED_CRYPTO_BREACH",
+                  "evaluation_type": "boolean_match",
+                  "field_to_evaluate": "always_true",
+                  "outcome": {
+                    "action": "NOTIFY_DPA_72H",
+                    "risk_score_multiplier": 2.5,
+                    "remediation_priority": "HIGH_COMPLIANCE_ALERT"
+                  }
+                }
+              }
+            },
+            "false_branch": {
+              "condition_id": "COND_007_A_AVAILABILITY_IMPACT",
+              "description": "Does the unencrypted special data breach cause permanent loss of data access?",
+              "evaluation_type": "boolean_match",
+              "field_to_evaluate": "payload.impact_metrics.permanent_availability_loss",
+              "true_branch": {
+                "condition_id": "COND_008_A_BACKUP_REDUNDANCY",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "payload.security_measures.has_isolated_offline_backups",
+                "true_branch": {
+                  "condition_id": "OUTCOME_AVAILABILITY_RESOLVED",
+                  "evaluation_type": "boolean_match",
+                  "field_to_evaluate": "always_true",
+                  "outcome": {
+                    "action": "NOTIFY_DPA_72H",
+                    "risk_score_multiplier": 2.0,
+                    "remediation_priority": "HIGH"
+                  }
+                },
+                "false_branch": {
+                  "condition_id": "OUTCOME_AVAILABILITY_DISASTER",
+                  "evaluation_type": "boolean_match",
+                  "field_to_evaluate": "always_true",
+                  "outcome": {
+                    "action": "NOTIFY_DPA_AND_SUBJECTS_IMMEDIATELY",
+                    "risk_score_multiplier": 4.5,
+                    "remediation_priority": "TIER_1_P1_WAR_ROOM"
+                  }
+                }
+              },
+              "false_branch": {
+                "condition_id": "OUTCOME_STANDARD_SPECIAL_BREACH",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "always_true",
+                "outcome": {
+                  "action": "NOTIFY_DPA_AND_SUBJECTS_IMMEDIATELY",
+                  "risk_score_multiplier": 4.0,
+                  "remediation_priority": "TIER_1_P1_WAR_ROOM"
+                }
+              }
+            }
+          },
+          "false_branch": {
+            "condition_id": "COND_004_B_STANDARD_DATA_VOLUME",
+            "description": "Evaluate exposure thresholds for regular personal data records.",
+            "evaluation_type": "threshold_check",
+            "field_to_evaluate": "payload.metrics.record_count",
+            "true_branch": {
+              "condition_id": "COND_005_B_SYSTEMIC_VULNERABILITY",
+              "description": "Does the breach indicate a wider systemic framework failure or targeted exploit?",
+              "evaluation_type": "boolean_match",
+              "field_to_evaluate": "payload.is_targeted_exploit",
+              "true_branch": {
+                "condition_id": "OUTCOME_LARGE_SCALE_EXPLOIT",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "always_true",
+                "outcome": {
+                  "action": "NOTIFY_DPA_72H",
+                  "risk_score_multiplier": 3.0,
+                  "remediation_priority": "TIER_1_WAR_ROOM"
+                }
+              },
+              "false_branch": {
+                "condition_id": "OUTCOME_LARGE_SCALE_ACCIDENTAL",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "always_true",
+                "outcome": {
+                  "action": "NOTIFY_DPA_72H",
+                  "risk_score_multiplier": 2.0,
+                  "remediation_priority": "HIGH"
+                }
+              }
+            },
+            "false_branch": {
+              "condition_id": "COND_005_C_LOW_VOLUME_IMPACT",
+              "description": "Does the low-volume incident present potential identity theft or physical risk?",
+              "evaluation_type": "boolean_match",
+              "field_to_evaluate": "payload.impact_metrics.identity_theft_risk",
+              "true_branch": {
+                "condition_id": "OUTCOME_LOW_VOLUME_HIGH_INDIVIDUAL_RISK",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "always_true",
+                "outcome": {
+                  "action": "NOTIFY_DPA_AND_SUBJECTS_IMMEDIATELY",
+                  "risk_score_multiplier": 3.5,
+                  "remediation_priority": "HIGH_COMPLIANCE_ALERT"
+                }
+              },
+              "false_branch": {
+                "condition_id": "OUTCOME_LOW_VOLUME_LOW_RISK",
+                "evaluation_type": "boolean_match",
+                "field_to_evaluate": "always_true",
+                "outcome": {
+                  "action": "INTERNAL_RECORD_ONLY",
+                  "risk_score_multiplier": 0.5,
+                  "remediation_priority": "LOW_CLEANUP"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
