@@ -1,54 +1,39 @@
 import { rules, resolveField, Payload } from '../shared';
 
 export type Outcome = {
-  action: string;
-  risk_score_multiplier: number;
-  remediation_priority: string;
+  readonly action: string;
+  readonly risk_score_multiplier: number;
+  readonly remediation_priority: string;
 };
 
 export type EvaluationResult = {
-  outcome: Outcome;
-  path: string[];
-  confidence: number;
-  priority_escalated: boolean;
-  jurisdictions: string[];
-  temporal_decay_applied: boolean;
-  user_category: string;
-  mitigation_credit: number;
-  deadline_utc: string | null;
-  similar_breaches_found: number;
+  readonly outcome: Outcome;
+  readonly path: readonly string[];
+  readonly confidence: number;
+  readonly priority_escalated: boolean;
+  readonly jurisdictions: readonly string[];
+  readonly temporal_decay_applied: boolean;
+  readonly user_category: string;
+  readonly mitigation_credit: number;
+  readonly deadline_utc: string | null;
+  readonly similar_breaches_found: number;
 };
 
-export function evaluate(node: any, payload: Payload, path: string[] = [], state: any = {}): EvaluationResult {
-  const currentPath = [...path, node.condition_id];
+export function evaluate(node: any, payload: Readonly<Payload>, path: readonly string[] = [], state: Readonly<any> = {}): EvaluationResult {
+  const currentPath: readonly string[] = [...path, node.condition_id];
   
-  // FEATURE 1: Confidence Scoring (Vibe Coding Addition)
   const confidence = payload.data_quality_score || 1.0;
-  
-  // FEATURE 3: Multi-Jurisdiction (Vibe Coding Addition)
   const jurisdictions = payload.affected_regions || ['EU'];
 
   if (node.outcome) {
     const outcome = node.outcome;
-    
-    // FEATURE 2: Priority Escalation
     const priority_escalated = outcome.action === 'NOTIFY_DPA_AND_SUBJECTS_IMMEDIATELY';
-
-    // FEATURE 4: Temporal Decay
     const daysSinceBreach = payload.days_since_discovery || 0;
     const temporal_decay_applied = daysSinceBreach > 30;
     const finalMultiplier = temporal_decay_applied ? outcome.risk_score_multiplier * 0.8 : outcome.risk_score_multiplier;
-
-    // FEATURE 5: User Category
     const user_category = payload.user_type || 'Standard';
-
-    // FEATURE 6: Mitigation Credit
     const mitigation_credit = payload.password_reset_forced ? 0.1 : 0;
-
-    // FEATURE 7: Deadline Calculator
     const deadline_utc = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
-
-    // FEATURE 8: Cross-Reference Check
     const similar_breaches_found = payload.previous_incidents_count || 0;
 
     return {

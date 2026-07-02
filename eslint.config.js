@@ -22,9 +22,12 @@ export default defineConfig([
     rules: {
       "quotes": ["error", "double"],
       "semi": ["error", "always"],
+      "no-var": "error",
+      "prefer-const": "error",
     },
   },
   {
+    // THE GUARDRAIL: Enforced strictly only on the functional directory
     files: ["src/functional/**/*.ts"],
     plugins: {
       functional,
@@ -36,6 +39,11 @@ export default defineConfig([
       ...functional.configs.lite.rules,
       "functional/no-return-void": ["error", { "allowNull": false, "allowUndefined": false }],
       "functional/no-expression-statements": "error",
+      "functional/immutable-data": "error",
+      "functional/prefer-immutable-types": "error",
+      "no-param-reassign": "error",
+      "@typescript-eslint/prefer-readonly": "error",
+      "@typescript-eslint/switch-exhaustiveness-check": "error",
       "no-restricted-syntax": [
         "error",
         {

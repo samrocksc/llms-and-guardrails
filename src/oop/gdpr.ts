@@ -5,7 +5,7 @@ export class GDPREvaluator {
   private isResolved: boolean = false;
   private payload: Payload | null = null;
   private path: string[] = [];
-  
+
   // VIBE CODING: Just adding properties to the class as we go
   private confidence: number = 1.0;
   private priority_escalated: boolean = false;
@@ -44,16 +44,16 @@ export class GDPREvaluator {
 
     if (node.outcome) {
       this.isResolved = true;
-      
+
       // FEATURE 2: Priority Escalation
       if (node.outcome.action === 'NOTIFY_DPA_AND_SUBJECTS_IMMEDIATELY') {
         this.priority_escalated = true;
       }
-      
+
       // Apply the math to the final state
       const decay = this.temporal_decay_applied ? 0.8 : 1.0;
       node.outcome.risk_score_multiplier = (node.outcome.risk_score_multiplier * decay) - this.mitigation_credit;
-      
+
       return;
     }
 
@@ -68,9 +68,9 @@ export class GDPREvaluator {
     } else if (evalType === 'any_of') {
       isTrue = Array.isArray(val) && val.length > 0;
     } else if (evalType === 'threshold_check') {
-      isTrue = (node.field_to_evaluate.includes('algorithm_bits')) 
-               ? val > 128 
-               : val > 1000;
+      isTrue = (node.field_to_evaluate.includes('algorithm_bits'))
+        ? val > 128
+        : val > 1000;
     }
 
     this.currentNode = isTrue ? node.true_branch : node.false_branch;
